@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.1)
-project(tmxlite VERSION 1.3.1)
+cmake_minimum_required(VERSION 3.30.2)
+project(tmxlite VERSION 1.3.1 LANGUAGES CXX)
 SET(PROJECT_NAME tmxlite)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
-
-if(NOT TMXLITE_STATIC_LIB)
-  SET(TMXLITE_STATIC_LIB FALSE CACHE BOOL "Should tmxlite be built as a static or shared lib?")
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  SET(BUILD_SHARED_LIBS FALSE CACHE BOOL "Should tmxlite be built as a static or shared lib?")
 endif()
 
 SET(PROJECT_STATIC_RUNTIME FALSE CACHE BOOL "Use statically linked standard/runtime libraries?")
@@ -37,7 +35,7 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(TMXLITE_STATIC_LIB)
+if(BUILD_SHARED_LIBS)
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -D_DEBUG_ -DTMXLITE_STATIC")
   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -DTMXLITE_STATIC")
   SET(CMAKE_DEBUG_POSTFIX -s-d)
@@ -64,62 +62,52 @@ include(${PROJECT_DIR}/CMakeLists.txt)
 if(USE_EXTLIBS)
     add_definitions(-DUSE_EXTLIBS)
     add_definitions(-DUSE_ZSTD)
-    
-    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
-    
+
     find_package(ZLIB REQUIRED)
-    find_package(PUGIXML REQUIRED)
-    find_package(Zstd REQUIRED)
-    
-    include_directories(${ZLIB_INCLUDE_DIRS} ${PUGIXML_INCLUDE_DIR} ${ZSTD_INCLUDE_DIR})
-    
+    find_package(pugixml REQUIRED)
+    find_package(zstd REQUIRED)
 else()
     #add miniz and pugixml from source
     SET(PROJECT_SRC ${PROJECT_SRC} ${LIB_SRC})
-    
     if(USE_ZSTD)
-        add_definitions(-DUSE_ZSTD)
-    
-        SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
-        find_package(Zstd REQUIRED)
-        include_directories(${ZSTD_INCLUDE_DIR})
+      add_definitions(-DUSE_ZSTD)
+      find_package(zstd REQUIRED)
     endif()
     
 endif()
 
-if(WIN32)
-  if(TMXLITE_STATIC_LIB)
+if(NOT BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} STATIC ${PROJECT_SRC})
-  else()
-    add_library(${PROJECT_NAME} SHARED ${PROJECT_SRC})
-  endif()   
 else()
-  if(TMXLITE_STATIC_LIB)
-    add_library(${PROJECT_NAME} STATIC ${PROJECT_SRC})
-  else()
     add_library(${PROJECT_NAME} SHARED ${PROJECT_SRC})
-  endif()
-endif()
+endif()   
 
 if(USE_EXTLIBS)
-    target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES} ${PUGIXML_LIBRARY} ${ZSTD_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB pugixml::static zstd::libzstd)
 else()
     if(USE_ZSTD)
-    target_link_libraries(${PROJECT_NAME} ${ZSTD_LIBRARY})    
-    endif()    
+      target_link_libraries(${PROJECT_NAME} zstd::libzstd)
+    endif()
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmxlite.pc.in ${CMAKE_CURRENT_BINARY_DIR}/tmxlite.pc
                @ONLY)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty>
+  $<INSTALL_INTERFACE:include>
+)
 
 include(GNUInstallDirs)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/tmxlite DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-if(TMXLITE_STATIC_LIB)
+if(BUILD_SHARED_LIBS)
   install(TARGETS ${PROJECT_NAME} EXPORT tmxlite-targets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 else()
-  install(TARGETS ${PROJECT_NAME} EXPORT tmxlite-targets 
+  install(TARGETS ${PROJECT_NAME} EXPORT tmxlite-targets
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -129,3 +117,38 @@ install(
   FILES       ${CMAKE_CURRENT_BINARY_DIR}/tmxlite.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
   COMPONENT   libraries)
+
+# https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-packages
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+    )
+
+# A Package Config file that works from the build directory
+export(EXPORT tmxlite-targets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/tmxliteTargets.cmake"
+    NAMESPACE tmxlite::
+    )
+
+# A Package Config file that works from the installation directory
+set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/tmxlite)
+
+install(EXPORT tmxlite-targets
+    FILE tmxliteTargets.cmake
+    NAMESPACE tmxlite::
+    DESTINATION ${ConfigPackageLocation}
+    )
+
+configure_package_config_file(
+    cmake/tmxliteConfig.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfig.cmake"
+    INSTALL_DESTINATION ${ConfigPackageLocation}
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigVersion.cmake"
+    DESTINATION ${ConfigPackageLocation}
+    )

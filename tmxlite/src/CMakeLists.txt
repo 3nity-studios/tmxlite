@@ -11,5 +11,5 @@ set(PROJECT_SRC
   ${PROJECT_DIR}/ObjectTypes.cpp)
   
   set(LIB_SRC
-    ${PROJECT_DIR}/miniz.c
-    ${PROJECT_DIR}/detail/pugixml.cpp)
+    ${PROJECT_DIR}/../thirdparty/miniz.c
+    ${PROJECT_DIR}/../thirdparty/detail/pugixml.cpp)
