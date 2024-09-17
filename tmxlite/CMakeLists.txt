@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30.2)
-project(tmxlite VERSION 1.4.1 LANGUAGES CXX)
+project(tmxlite VERSION 1.4.4 LANGUAGES CXX)
 SET(PROJECT_NAME tmxlite)
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
