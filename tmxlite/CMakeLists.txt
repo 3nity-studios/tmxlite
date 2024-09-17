@@ -6,6 +6,12 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
   SET(BUILD_SHARED_LIBS FALSE CACHE BOOL "Should tmxlite be built as a static or shared lib?")
 endif()
 
+if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Should tmxlite be built in release or debug mode?")
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+endif()
+
+
 SET(PROJECT_STATIC_RUNTIME FALSE CACHE BOOL "Use statically linked standard/runtime libraries?")
 #option(BUILD_DOC "Build documentation" OFF)
 
@@ -119,36 +125,46 @@ install(
   COMPONENT   libraries)
 
 # https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html#creating-packages
+if(BUILD_SHARED_LIBS)
+    set(config_name "Shared")
+else()
+    set(config_name "Static")
+endif()
+set(targets_config_filename "tmxlite${config_name}Targets.cmake")
+
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
-    )
+  "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion    )
 
 # A Package Config file that works from the build directory
 export(EXPORT tmxlite-targets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/tmxliteTargets.cmake"
-    NAMESPACE tmxlite::
-    )
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/tmxliteTargets.cmake"
+  NAMESPACE tmxlite::)
 
 # A Package Config file that works from the installation directory
 set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/tmxlite)
 
 install(EXPORT tmxlite-targets
-    FILE tmxliteTargets.cmake
-    NAMESPACE tmxlite::
-    DESTINATION ${ConfigPackageLocation}
-    )
+  FILE ${targets_config_filename}
+  NAMESPACE tmxlite::
+  DESTINATION ${ConfigPackageLocation})
 
 configure_package_config_file(
-    cmake/tmxliteConfig.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfig.cmake"
-    INSTALL_DESTINATION ${ConfigPackageLocation}
-)
+  cmake/tmxliteConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfig.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation})
 
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigVersion.cmake"
-    DESTINATION ${ConfigPackageLocation}
-    )
+configure_package_config_file(
+  cmake/tmxliteConfigDependencies.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigDependencies.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation})
+
+install(
+  FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigDependencies.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/tmxliteConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
+  COMPONENT devel)

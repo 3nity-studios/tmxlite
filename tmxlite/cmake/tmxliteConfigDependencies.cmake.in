@@ -1,0 +1,16 @@
+# in case of static linking, we must also define the list of all the dependencies of TMXLITE libraries
+if(TMXLITE_STATIC_LIBRARIES)
+    include(CMakeFindDependencyMacro)
+
+    # start with an empty list
+    set(FIND_TMXLITE_DEPENDENCIES_NOTFOUND)
+
+    find_dependency(ZLIB)
+    find_dependency(pugixml)
+    find_dependency(zstd)
+
+    if(FIND_TMXLITE_DEPENDENCIES_NOTFOUND)
+        set(FIND_TMXLITE_ERROR "TMXLITE found but some of its dependencies are missing (${FIND_TMXLITE_DEPENDENCIES_NOTFOUND})")
+        set(TMXLITE_FOUND OFF)
+    endif()
+endif()

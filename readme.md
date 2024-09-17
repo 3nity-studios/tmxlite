@@ -1,3 +1,10 @@
+notable changes respect the original project:
+
+* when using cmake, tmxlite is now to be linked using tmxlite::tmxlite
+* cmake build type defaults to release
+
+-------
+
 tmxlite
 -------
 
@@ -25,7 +32,7 @@ Tmxlite supports maps using Zstd compressed tile layers, however Zstd needs to b
 #### Building
 Either use the included Visual Studio project file if you are on Windows or the CMake file to generate project files for your compiler of choice. tmxlite can be built as both static or shared libraries, or simply include the source files in your own project. The following options are available for CMake configuration:
 
- * `TMXLITE_STATIC_LIB` - Set this to true to build a static library, default false
+ * `BUILD_SHARED_LIBS` - Set this to true to build a shared library, default false
  * `PROJECT_STATIC_RUNTIME` - Statically link the cstd libraries, default false
  * `USE_RTTI` - Enable runtime type information, default true
  * `USE_EXTLIBS` - Use externally linked pugixml, zlib and Zstd libraries, default false
