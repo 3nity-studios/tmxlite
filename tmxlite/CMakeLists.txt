@@ -87,7 +87,7 @@ if(NOT BUILD_SHARED_LIBS)
 else()
     add_library(${PROJECT_NAME} SHARED ${PROJECT_SRC})
 endif()   
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${target})
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 if(USE_EXTLIBS)
     target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB pugixml::static zstd::libzstd)
