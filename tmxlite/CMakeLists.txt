@@ -69,9 +69,44 @@ if(USE_EXTLIBS)
     add_definitions(-DUSE_EXTLIBS)
     add_definitions(-DUSE_ZSTD)
 
-    find_package(ZLIB REQUIRED)
-    find_package(pugixml REQUIRED)
-    find_package(zstd REQUIRED)
+    if(TMXLITE_FETCH_EXTLIBS)
+      FetchContent_Declare(
+        pugixml
+        GIT_REPOSITORY   https://github.com/zeux/pugixml.git
+        GIT_TAG          db78afc2b7d8f043b4bc6b185635d949ea2ed2a8 # v1.14
+        GIT_SHALLOW      ON
+        GIT_PROGRESS     TRUE
+        EXCLUDE_FROM_ALL
+        SYSTEM
+      )
+      FetchContent_MakeAvailable(pugixml)
+
+      FetchContent_Declare(
+        ZLIB
+        GIT_REPOSITORY   https://github.com/madler/zlib.git
+        GIT_TAG          51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf # 1.3.1
+        GIT_SHALLOW      ON
+        GIT_PROGRESS     TRUE
+        EXCLUDE_FROM_ALL
+        SYSTEM
+      )
+      FetchContent_MakeAvailable(ZLIB)
+      
+      FetchContent_Declare(
+        zstd
+        GIT_REPOSITORY   https://github.com/facebook/zstd.git
+        GIT_TAG          794ea1b0afca0f020f4e57b6732332231fb23c70 # v1.5.6
+        GIT_SHALLOW      ON
+        GIT_PROGRESS     TRUE
+        EXCLUDE_FROM_ALL
+        SYSTEM
+      )
+      FetchContent_MakeAvailable(zstd)
+    else()
+      find_package(ZLIB REQUIRED)
+      find_package(pugixml REQUIRED)
+      find_package(zstd REQUIRED)
+    endif()
 else()
     #add miniz and pugixml from source
     SET(PROJECT_SRC ${PROJECT_SRC} ${LIB_SRC})
