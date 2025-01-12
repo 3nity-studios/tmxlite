@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30.2)
+cmake_minimum_required(VERSION 3.22)
 project(tmxlite VERSION 1.4.4 LANGUAGES CXX C)
 SET(PROJECT_NAME tmxlite)
 
